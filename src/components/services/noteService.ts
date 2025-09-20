@@ -9,13 +9,13 @@ const api = axios.create({
   },
 });
 
-export interface FetchNotesResponse {
-  docs: Note[];
+export type FetchNotesResponse = {
+  notes: Note[];
+  totalPages: number;
   totalDocs: number;
   limit: number;
-  totalPages: number;
   page: number;
-}
+};
 
 export interface CreateNoteDTO {
   title: string;

@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Toaster, toast } from "react-hot-toast";
 import { useDebounce } from "use-debounce";
@@ -10,8 +10,8 @@ import Modal from "../Modal/Modal";
 import NoteForm from "../NoteForm/NoteForm";
 import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
-import type { Note } from "../types/note";
 
+import type { Note } from "../types/note";
 import { fetchNotes, createNote, deleteNote } from "../services/noteService";
 import type {
   FetchNotesResponse,
@@ -33,23 +33,14 @@ export default function App() {
   const query = useQuery<FetchNotesResponse, Error>({
     queryKey: ["notes", page, perPage, debouncedSearch],
     queryFn: () => fetchNotes(page, perPage, debouncedSearch),
-
     retry: false,
   });
 
-  // --- Debug: що реально приходить з бекенду ---
-  useEffect(() => {}, [query.data]);
-
-  // --- Toast помилок завантаження ---
-  useEffect(() => {
-    if (query.isError) {
-      toast.error("Failed to load notes");
-    }
-  }, [query.isError]);
+  const data = query.data as FetchNotesResponse | undefined;
 
   // --- Дані нотаток ---
-  const notes: Note[] = query.data?.notes ?? [];
-  const totalPages: number = query.data?.totalPages ?? 0;
+  const notes: Note[] = data?.notes ?? [];
+  const totalPages: number = data?.totalPages ?? 0;
 
   // --- Створення нотатки ---
   const handleCreate = useCallback(
@@ -59,11 +50,23 @@ export default function App() {
         toast.success("Note created");
         setModalOpen(false);
 
-        queryClient.setQueryData<FetchNotesResponse | undefined>(
+        queryClient.setQueryData<FetchNotesResponse>(
           ["notes", page, perPage, debouncedSearch],
           (old) => {
-            if (!old) return { notes: [newNote], totalPages: 1 };
-            return { ...old, notes: [newNote, ...old.notes] };
+            if (!old) {
+              return {
+                notes: [newNote],
+                totalPages: 1,
+                totalDocs: 1,
+                page: 1,
+                limit: perPage,
+              };
+            }
+            return {
+              ...old,
+              notes: [newNote, ...old.notes],
+              totalDocs: old.totalDocs + 1,
+            };
           }
         );
       } catch {
@@ -80,7 +83,7 @@ export default function App() {
         await deleteNote(id);
         toast.success("Note deleted");
 
-        queryClient.setQueryData<FetchNotesResponse | undefined>(
+        queryClient.setQueryData<FetchNotesResponse>(
           ["notes", page, perPage, debouncedSearch],
           (old) => {
             if (!old) return old;
