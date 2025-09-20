@@ -23,6 +23,8 @@ export interface CreateNote {
   tag: Note["tag"];
 }
 
+export type DeleteNoteResponse = { deletedCount?: number };
+
 // 🔹 Важливо: параметр perPage, не limit
 export async function fetchNotes(
   page = 1,
@@ -41,9 +43,7 @@ export async function createNote(note: CreateNote): Promise<Note> {
   return data;
 }
 
-export async function deleteNote(
-  id: string
-): Promise<{ deletedCount?: number }> {
-  const { data } = await api.delete<{ deletedCount?: number }>(`/notes/${id}`);
+export async function deleteNote(id: string): Promise<DeleteNoteResponse> {
+  const { data } = await api.delete<DeleteNoteResponse>(`/notes/${id}`);
   return data;
 }
