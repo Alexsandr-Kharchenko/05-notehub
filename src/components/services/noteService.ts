@@ -17,7 +17,7 @@ export type FetchNotesResponse = {
   page: number;
 };
 
-export interface CreateNoteDTO {
+export interface CreateNote {
   title: string;
   content?: string;
   tag: Note["tag"];
@@ -36,7 +36,7 @@ export async function fetchNotes(
   return data;
 }
 
-export async function createNote(note: CreateNoteDTO): Promise<Note> {
+export async function createNote(note: CreateNote): Promise<Note> {
   const { data } = await api.post<Note>("/notes", note);
   return data;
 }
