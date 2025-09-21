@@ -12,8 +12,8 @@ import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 
 import type { Note } from "../types/note";
-import { fetchNotes, createNote, deleteNote } from "../services/noteService";
-import type { FetchNotes, CreateNote } from "../services/noteService";
+import { fetchNotes, createNote, deleteNote } from "../../services/noteService";
+import type { FetchNotes, CreateNote } from "../../services/noteService";
 
 import styles from "./App.module.css";
 
