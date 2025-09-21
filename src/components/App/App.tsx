@@ -11,7 +11,7 @@ import NoteForm from "../NoteForm/NoteForm";
 import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 
-import type { Note } from "../types/note";
+import type { Note } from "../../types/note";
 import { fetchNotes, createNote, deleteNote } from "../../services/noteService";
 import type { FetchNotes, CreateNote } from "../../services/noteService";
 

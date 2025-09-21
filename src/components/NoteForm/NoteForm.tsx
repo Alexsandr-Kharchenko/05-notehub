@@ -1,7 +1,7 @@
 import { Formik, Form, Field, ErrorMessage as FE } from "formik";
 import * as Yup from "yup";
 import styles from "./NoteForm.module.css";
-import type { Note } from "../types/note";
+import type { Note } from "../../types/note";
 
 interface NoteFormProps {
   onSubmit: (values: {
