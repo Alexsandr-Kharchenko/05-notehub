@@ -12,11 +12,8 @@ import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 
 import type { Note } from "../types/note";
-import { fetchNotes, createNote, deleteNote } from "../../services/noteService";
-import type {
-  FetchNotesResponse,
-  CreateNote,
-} from "../../services/noteService";
+import { fetchNotes, createNote, deleteNote } from "../services/noteService";
+import type { FetchNotes, CreateNote } from "../services/noteService";
 
 import styles from "./App.module.css";
 
@@ -30,16 +27,17 @@ export default function App() {
   const queryClient = useQueryClient();
 
   // --- Fetch нотаток ---
-  const query = useQuery<FetchNotesResponse, Error>({
+  const query = useQuery<FetchNotes, Error>({
     queryKey: ["notes", page, perPage, debouncedSearch],
     queryFn: () => fetchNotes(page, perPage, debouncedSearch),
     retry: false,
   });
 
-  const data = query.data as FetchNotesResponse | undefined;
+  const data = query.data as FetchNotes | undefined;
 
   // --- Дані нотаток ---
   const notes: Note[] = data?.notes ?? [];
+
   const totalPages: number = data?.totalPages ?? 0;
 
   // --- Створення нотатки ---
@@ -50,7 +48,7 @@ export default function App() {
         toast.success("Note created");
         setModalOpen(false);
 
-        queryClient.setQueryData<FetchNotesResponse>(
+        queryClient.setQueryData<FetchNotes>(
           ["notes", page, perPage, debouncedSearch],
           (old) => {
             if (!old) {
@@ -83,7 +81,7 @@ export default function App() {
         await deleteNote(id);
         toast.success("Note deleted");
 
-        queryClient.setQueryData<FetchNotesResponse>(
+        queryClient.setQueryData<FetchNotes>(
           ["notes", page, perPage, debouncedSearch],
           (old) => {
             if (!old) return old;

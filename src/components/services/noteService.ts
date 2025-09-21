@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { Note } from "../components/types/note";
+import type { Note } from "../types/note";
 
 const api = axios.create({
   baseURL: "https://notehub-public.goit.study/api",
@@ -9,11 +9,11 @@ const api = axios.create({
   },
 });
 
-export type FetchNotesResponse = {
-  notes: Note[];
-  totalPages: number;
+export type FetchNotes = {
+  notes: Note[]; // саме так як повертає бекенд
   totalDocs: number;
   limit: number;
+  totalPages: number;
   page: number;
 };
 
@@ -23,18 +23,21 @@ export interface CreateNote {
   tag: Note["tag"];
 }
 
-export type DeleteNoteResponse = { deletedCount?: number };
+export interface DeleteNote {
+  message: string;
+  note: Note;
+}
 
-// 🔹 Важливо: параметр perPage, не limit
+// --- Запити --- //
 export async function fetchNotes(
   page = 1,
   perPage = 12,
   search = ""
-): Promise<FetchNotesResponse> {
+): Promise<FetchNotes> {
   const params: Record<string, string | number> = { page, perPage };
   if (search) params.search = search;
 
-  const { data } = await api.get<FetchNotesResponse>("/notes", { params });
+  const { data } = await api.get<FetchNotes>("/notes", { params });
   return data;
 }
 
@@ -43,7 +46,7 @@ export async function createNote(note: CreateNote): Promise<Note> {
   return data;
 }
 
-export async function deleteNote(id: string): Promise<DeleteNoteResponse> {
-  const { data } = await api.delete<DeleteNoteResponse>(`/notes/${id}`);
+export async function deleteNote(id: string): Promise<DeleteNote> {
+  const { data } = await api.delete<DeleteNote>(`/notes/${id}`);
   return data;
 }
