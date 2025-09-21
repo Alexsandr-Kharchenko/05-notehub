@@ -1,36 +1,45 @@
 import { Formik, Form, Field, ErrorMessage as FE } from "formik";
 import * as Yup from "yup";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-hot-toast";
+
 import styles from "./NoteForm.module.css";
 import type { Note } from "../../types/note";
+import { createNote, type CreateNote } from "../../services/noteService";
 
 interface NoteFormProps {
-  onSubmit: (values: {
-    title: string;
-    content?: string;
-    tag: Note["tag"];
-  }) => void;
   onCancel: () => void;
 }
 
 const validationSchema = Yup.object({
   title: Yup.string().min(3).max(50).required("Title is required"),
   content: Yup.string().max(500),
-  tag: Yup.mixed<string>()
+  tag: Yup.mixed<Note["tag"]>()
     .oneOf(["Todo", "Work", "Personal", "Meeting", "Shopping"])
     .required("Tag required"),
 });
 
-export default function NoteForm({ onSubmit, onCancel }: NoteFormProps) {
+export default function NoteForm({ onCancel }: NoteFormProps) {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation<Note, Error, CreateNote>({
+    mutationFn: createNote,
+    onSuccess: () => {
+      toast.success("Note created");
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      onCancel();
+    },
+    onError: () => {
+      toast.error("Failed to create note");
+    },
+  });
+
   return (
     <Formik
-      initialValues={{ title: "", content: "", tag: "Todo" }}
+      initialValues={{ title: "", content: "", tag: "Todo" as Note["tag"] }}
       validationSchema={validationSchema}
       onSubmit={(values, actions) => {
-        // Кастуємо tag до строгої множини
-        onSubmit({
-          ...values,
-          tag: values.tag as Note["tag"],
-        });
+        mutation.mutate(values);
         actions.setSubmitting(false);
       }}
     >
@@ -77,9 +86,9 @@ export default function NoteForm({ onSubmit, onCancel }: NoteFormProps) {
             <button
               type="submit"
               className={styles.submitButton}
-              disabled={isSubmitting}
+              disabled={isSubmitting || mutation.isPending}
             >
-              Create note
+              {mutation.isPending ? "Creating..." : "Create note"}
             </button>
           </div>
         </Form>

@@ -1,7 +1,7 @@
-import { useCallback, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Toaster, toast } from "react-hot-toast";
+import { useState } from "react";
+import { Toaster } from "react-hot-toast";
 import { useDebounce } from "use-debounce";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import SearchBox from "../SearchBox/SearchBox";
 import NoteList from "../NoteList/NoteList";
@@ -12,8 +12,7 @@ import Loader from "../Loader/Loader";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 
 import type { Note } from "../../types/note";
-import { fetchNotes, createNote, deleteNote } from "../../services/noteService";
-import type { FetchNotes, CreateNote } from "../../services/noteService";
+import { fetchNotes, type FetchNotes } from "../../services/noteService";
 
 import styles from "./App.module.css";
 
@@ -26,74 +25,25 @@ export default function App() {
 
   const queryClient = useQueryClient();
 
-  // --- Fetch нотаток ---
   const query = useQuery<FetchNotes, Error>({
     queryKey: ["notes", page, perPage, debouncedSearch],
     queryFn: () => fetchNotes(page, perPage, debouncedSearch),
     retry: false,
+
+    placeholderData: () => {
+      const previousData = queryClient.getQueryData<FetchNotes>([
+        "notes",
+        page - 1,
+        perPage,
+        debouncedSearch,
+      ]);
+      return previousData ?? { notes: [], totalPages: 0 };
+    },
   });
 
-  const data = query.data as FetchNotes | undefined;
-
-  // --- Дані нотаток ---
+  const data = query.data;
   const notes: Note[] = data?.notes ?? [];
-
   const totalPages: number = data?.totalPages ?? 0;
-
-  // --- Створення нотатки ---
-  const handleCreate = useCallback(
-    async (payload: CreateNote) => {
-      try {
-        const newNote = await createNote(payload);
-        toast.success("Note created");
-        setModalOpen(false);
-
-        queryClient.setQueryData<FetchNotes>(
-          ["notes", page, perPage, debouncedSearch],
-          (old) => {
-            if (!old) {
-              return {
-                notes: [newNote],
-                totalPages: 1,
-                totalDocs: 1,
-                page: 1,
-                limit: perPage,
-              };
-            }
-            return {
-              ...old,
-              notes: [newNote, ...old.notes],
-              totalDocs: old.totalDocs + 1,
-            };
-          }
-        );
-      } catch {
-        toast.error("Failed to create note");
-      }
-    },
-    [queryClient, page, perPage, debouncedSearch]
-  );
-
-  // --- Видалення нотатки ---
-  const handleDelete = useCallback(
-    async (id: string) => {
-      try {
-        await deleteNote(id);
-        toast.success("Note deleted");
-
-        queryClient.setQueryData<FetchNotes>(
-          ["notes", page, perPage, debouncedSearch],
-          (old) => {
-            if (!old) return old;
-            return { ...old, notes: old.notes.filter((n) => n.id !== id) };
-          }
-        );
-      } catch {
-        toast.error("Failed to delete note");
-      }
-    },
-    [queryClient, page, perPage, debouncedSearch]
-  );
 
   return (
     <div className={styles.app}>
@@ -122,24 +72,20 @@ export default function App() {
       </header>
 
       <main className={styles.content}>
-        {query.isLoading && <Loader />}
-        {query.isError && <ErrorMessage />}
-
-        {!query.isLoading && !query.isError && notes.length > 0 && (
-          <NoteList notes={notes} onDelete={handleDelete} />
-        )}
-
-        {!query.isLoading && !query.isError && notes.length === 0 && (
+        {query.isLoading || query.isFetching ? (
+          <Loader />
+        ) : query.isError ? (
+          <ErrorMessage />
+        ) : notes.length === 0 ? (
           <p className={styles.empty}>No notes found.</p>
+        ) : (
+          <NoteList notes={notes} />
         )}
       </main>
 
       {isModalOpen && (
         <Modal onClose={() => setModalOpen(false)}>
-          <NoteForm
-            onCancel={() => setModalOpen(false)}
-            onSubmit={handleCreate}
-          />
+          <NoteForm onCancel={() => setModalOpen(false)} />
         </Modal>
       )}
     </div>

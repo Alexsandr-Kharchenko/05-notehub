@@ -9,12 +9,10 @@ const api = axios.create({
   },
 });
 
+// --- Типи --- //
 export type FetchNotes = {
-  notes: Note[]; // саме так як повертає бекенд
-  totalDocs: number;
-  limit: number;
+  notes: Note[];
   totalPages: number;
-  page: number;
 };
 
 export interface CreateNote {
@@ -23,10 +21,8 @@ export interface CreateNote {
   tag: Note["tag"];
 }
 
-export interface DeleteNote {
-  message: string;
-  note: Note;
-}
+// API після видалення повертає одразу видалену нотатку
+export type DeleteNote = Note;
 
 // --- Запити --- //
 export async function fetchNotes(
